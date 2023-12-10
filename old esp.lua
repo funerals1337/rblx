@@ -6,11 +6,14 @@
     feel free to use
     -- NOTE:
     NOT SURE IF THIS VERSION WORKS, IF IT DOESNT FEEL FREE TO CONTACT ME
+
+    updated.
 ]]
 
 -- // Tables
 local cheat_client = {
     esp = {
+        base = {},
         bases = {},
         player = {
             enabled = true,
@@ -136,23 +139,23 @@ do
                     health = cheat_client:handle_render("Square", {ZIndex = 2, Thickness = 1, Visible = false, Filled = true, Color = newrgb(0, 255, 0), Transparency = 0.8}),
                     health_outline = cheat_client:handle_render("Square", {Thickness = 1, Visible = false, Filled = true, Color = newrgb(0, 0, 0), Transparency = 0.8})
                 }
-            }, {__index = cheat_client.esp.bases})
+            }, {__index = cheat_client.esp.base})
 
-            cheat_client.esp.bases[player] = esp
+            cheat_client.esp.bases[esp.player] = esp
             return esp
         end
 
         -- add cheat_client.esp.base functions -- done
 
         function cheat_client.esp.base:remove()
-            for _, render in next, esp.renders do
+            for _, render in next, rawget(self, "renders") do
                 render:Remove()
                 remove(cheat_client.renders, find(cheat_client.renders, render))
             end
         end
 
         function cheat_client.esp.base:set(bool)
-            for _, render in next, esp.renders do
+            for _, render in next, rawget(self, "renders") do
                 if render.Visible ~= bool then
                     render.Visible = bool
                 end
@@ -161,8 +164,9 @@ do
 
         function cheat_client.esp.base:update()
             if cheat_client:can_render() then
-                if esp.player then
-                    local character, humanoid, rootpart = cheat_client:get_parts(esp.player)
+                local player = rawget(self, "player")
+                if player then
+                    local character, humanoid, rootpart = cheat_client:get_parts(player)
 
                     if character and humanoid and rootpart then
                         local root_position = rootpart.Position
@@ -179,75 +183,79 @@ do
                                     local box_size = newvector2(floor(size * 1.5), floor(size * 1.9))
                                     local box_position = newvector2(floor(screen_position.X - size * 1.5 / 2), floor(screen_position.Y - size * 1.6 / 2))
 
-                                    do -- name
-                                        if cheat_client.esp.player.name then
-                                            name = esp.renders.name
-                                            name.Text = esp.player.Name
-                                            name.Position = box_position + newvector2(box_size.X / 2, -17)
-                                            name.Visible = true
-                                        end
-                                    end
-
-                                    do -- boxes
-                                        if cheat_client.esp.player.box then
-                                            box = esp.renders.box
-                                            box.Size = box_size
-                                            box.Position = box_position
-                                            box.Visible = true
-                                            
-                                            box_outline = esp.renders.box_outline
-                                            box_outline.Size = box_size
-                                            box_outline.Position = box_position
-                                            box_outline.Visible = true
-                                        end
-                                    end
-
-                                    do -- health
-                                        if cheat_client.esp.player.box then
-                                            health = esp.renders.health
-                                            health_size = floor(box_size.Y * (plrhealth / plrmaxhealth))
-                                            health.Size = newvector2(2, health_size)
-                                            health.Position = newvector2(box_position.X - 5, ((box_position.Y + box_size.Y) - health_size))
-                                            health.Color = newrgb(255, 0, 0):Lerp(newrgb(0, 255, 0), plrhealth / plrmaxhealth)
-                                            health.Visible = true
-
-                                            health_outline = esp.renders.health_outline
-                                            health_outline.Size = newvector2(4, box_size.Y + 2)
-                                            health_outline.Position = newvector2(box_position.X - 6, box_position.Y - 1)
-                                            health_outline.Visible = true
-                                        end
-                                    end
-
-                                    do -- weapon
-                                        if cheat_client.esp.player.weapon then
-                                            if character:FindFirstChildOfClass("Tool") then
-                                                weapon = esp.renders.weapon
-                                                weapon.Text = tostring(character:FindFirstChildOfClass("Tool"))
-                                                weapon.Position = box_position + newvector2(box_size.X / 2, (box_size.Y + 2))
-                                                weapon.Visible = true
-                                            else
-                                                esp.renders.weapon.Visible = false
+                                    if box_size and box_position then
+                                        local renders = rawget(self, "renders")
+                                        do -- name
+                                            if cheat_client.esp.player.name then
+                                                name = renders.name
+                                                name.Text = player.Name
+                                                name.Position = box_position + newvector2(box_size.X / 2, -17)
+                                                name.Visible = true
                                             end
                                         end
-                                    end
 
-                                    do -- status
-                                        if cheat_client.esp.player.status then
-                                            status = esp.renders.status
-                                            status_string = ""
-
-                                            if character:FindFirstChildOfClass("ForceField") then
-                                                status_string ..= "[FF]\n"
+                                        do -- boxes
+                                            if cheat_client.esp.player.box then
+                                                box = renders.box
+                                                box.Size = box_size
+                                                box.Position = box_position
+                                                box.Visible = true
+                                                
+                                                box_outline = renders.box_outline
+                                                box_outline.Size = box_size
+                                                box_outline.Position = box_position
+                                                box_outline.Visible = true
                                             end
-
-                                            if plrhealth <= 15 then
-                                                status_string ..= "[DW]"
-                                            end
-
-                                            status.Text = status_string
-                                            status.Position = newvector2(box_size.X + box_position.X + 1, box_position.Y - 2)
-                                            status.Visible = true
                                         end
+
+                                        do -- health
+                                            if cheat_client.esp.player.box then
+                                                health = renders.health
+                                                health_size = floor(box_size.Y * (plrhealth / plrmaxhealth))
+                                                health.Size = newvector2(2, health_size)
+                                                health.Position = newvector2(box_position.X - 5, ((box_position.Y + box_size.Y) - health_size))
+                                                health.Color = newrgb(255, 0, 0):Lerp(newrgb(0, 255, 0), plrhealth / plrmaxhealth)
+                                                health.Visible = true
+
+                                                health_outline = renders.health_outline
+                                                health_outline.Size = newvector2(4, box_size.Y + 2)
+                                                health_outline.Position = newvector2(box_position.X - 6, box_position.Y - 1)
+                                                health_outline.Visible = true
+                                            end
+                                        end
+
+                                        do -- weapon
+                                            if cheat_client.esp.player.weapon then
+                                                if character:FindFirstChildOfClass("Tool") then
+                                                    weapon = renders.weapon
+                                                    weapon.Text = tostring(character:FindFirstChildOfClass("Tool"))
+                                                    weapon.Position = box_position + newvector2(box_size.X / 2, (box_size.Y + 2))
+                                                    weapon.Visible = true
+                                                else
+                                                    renders.weapon.Visible = false
+                                                end
+                                            end
+                                        end
+
+                                        do -- status
+                                            if cheat_client.esp.player.status then
+                                                status = renders.status
+                                                status_string = ""
+
+                                                if character:FindFirstChildOfClass("ForceField") then
+                                                    status_string ..= "[FF]\n"
+                                                end
+
+                                                if plrhealth <= 15 then
+                                                    status_string ..= "[DW]"
+                                                end
+
+                                                status.Text = status_string
+                                                status.Position = newvector2(box_size.X + box_position.X + 1, box_position.Y - 2)
+                                                status.Visible = true
+                                            end
+                                        end
+                                        return
                                     end
                                 end
                             end
@@ -264,9 +272,11 @@ end
 
 --// Initialize
 
-cheat_client:handle_connection(runservice.HeartBeat, function()
-    for _, base in next cheat_client.esp.bases do
-        cheat_client:handle_function(base.update, "esp")
+cheat_client:handle_connection(runservice.RenderStepped, function()
+    for _, base in next, cheat_client.esp.bases do
+        cheat_client:handle_function(function() 
+            base:update()
+        end, "esp")
     end
 end)
 
@@ -293,6 +303,3 @@ for _, player in next, players:GetPlayers() do
         cheat_client:render_on_player(player)
     end
 end
-
-setfpscap(1337)
-
